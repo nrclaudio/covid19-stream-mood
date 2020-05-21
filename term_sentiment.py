@@ -28,8 +28,9 @@ def sent_dict(fp):
 
 def parse_json(fp):
     tweets_text = [json.loads(line)['text'] for line in fp
-                   if not json.loads(line)['is_quote_status']
-                   and not json.loads(line)['text'].startswith('RT')]
+                   if 'created_at' in json.loads(line)
+                   and not json.loads(line).get('is_quoted_status', False)
+                   and not json.loads(line).get('text', 'RT').startswith('RT')]
     return tweets_text
 
 
@@ -38,6 +39,15 @@ def norm(sentiments, counts):
     for key, sentiment in sentiments.items():
         ret[key] = sentiment + math.log10(counts.get(key, 1))
     return ret
+
+
+def tweet_sent(texts, scores):
+    sentiments = []
+    for text in texts:
+        words = [regex.sub('', strip_punct(word).lower())
+                 for word in text.split(' ') if not word.startswith(("https"))]
+        sentiments.append(sum(int(scores.get(word, 0)) for word in words))
+    return sentiments
 
 
 def inner_infer_sent(texts, scores):
@@ -60,15 +70,6 @@ def inner_infer_sent(texts, scores):
                                                  int(scores.get(posterior, 0))]) / (index + 1)
     inner_sent = norm(inner_sent, word_count)
     return inner_sent
-
-
-def tweet_sent(texts, scores):
-    sentiments = []
-    for text in texts:
-        words = [regex.sub('', strip_punct(word).lower())
-                 for word in text.split(' ') if not word.startswith(("https"))]
-        sentiments.append(sum(int(scores.get(word, 0)) for word in words))
-    return sentiments
 
 
 def infer_sent_term(texts, scores):

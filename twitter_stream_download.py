@@ -36,17 +36,19 @@ class MyListener(StreamListener):
     """Custom StreamListener for streaming data."""
 
     def __init__(self, data_dir, query):
+        query = query
         query_fname = format_filename(query)
         self.outfile = "%s/stream_%s.json" % (data_dir, query_fname)
 
     def on_data(self, data):
         try:
             with open(self.outfile, 'a') as f:
-                f.write(data)
-                print(data)
-                return True
+                if 'covid19' or '#covid19' in data.lower():
+                    f.write(data)
+                    print(data)
+                    return True
         except BaseException as e:
-            print("Error on_data: %s" % str(e))
+            print("Error on_status: %s" % str(e))
             time.sleep(5)
         return True
 
@@ -96,4 +98,5 @@ if __name__ == '__main__':
     api = tweepy.API(auth)
 
     twitter_stream = Stream(auth, MyListener(args.data_dir, args.query))
-    twitter_stream.filter(languages=["en"], track=[args.query])
+    twitter_stream.filter(
+        languages=["en"], locations=[-171.791110603, 18.91619, -66.96466, 71.3577635769])
