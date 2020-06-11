@@ -24,8 +24,7 @@ run for a while if you wish.
 import sys
 import json
 import re
-from collections import defaultdict
-from difflib import SequenceMatcher
+from collections import defaultdict, Counter
 
 
 regex = re.compile("[^a-zA-Z0-9.'-]")
@@ -158,9 +157,14 @@ def state_score(tweets_state):
     returns a dictionary with the score per state
     """
     state_score = defaultdict(int)
+    state_count = Counter()
     for key, val in tweets_state.items():
         if val['state'] in states:
+            state_count.update([val['state']])
             state_score[val['state']] += val['score']
+
+    state_score = {k: v / state_count[k] for (k, v) in state_score.items()}
+
     return state_score
 
 
